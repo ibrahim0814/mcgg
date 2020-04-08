@@ -16,7 +16,6 @@ const LeaderboardWrapper = styled.div`
   .first {
     font-weight: bold;
   }
-  height: 19rem;
 `
 
 const ActivityFeedWrapper = styled.div`

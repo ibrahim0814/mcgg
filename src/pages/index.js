@@ -216,7 +216,7 @@ const NewEntryFormCard = ({ users, update }) => {
                     placeholder="Enter description"
                     value={form.activity}
                     onChange={handleChange("activity")}
-                    maxLength="25"
+                    maxLength="15"
                   />
                 </div>
               </div>

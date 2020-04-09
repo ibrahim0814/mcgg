@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react"
 import "./styles.scss"
 import styled from "styled-components"
 
-const airtable_api_key = process.env.AIRTABLE_API_KEY
+const airtable_api_key = process.env.GATSBY_AIRTABLE_API_KEY
 
 const PageWrapper = styled.div`
   margin: 5%;
@@ -49,7 +49,7 @@ const NewEntryFormCard = ({ users, update }) => {
   const isSameDay = (first, second) => {
     console.log("first", first)
     console.log("second", second)
-    if (process.env.ALLOW_SAME_DATE === "true") {
+    if (process.env.GATSBY_ALLOW_SAME_DATE === "true") {
       console.log("in here ")
       return false
     } else {

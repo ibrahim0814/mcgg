@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react"
 import "./styles.scss"
 import styled from "styled-components"
 
+const airtable_api_key = process.env.AIRTABLE_API_KEY
+
 const PageWrapper = styled.div`
   margin: 5%;
   .title {
@@ -22,31 +24,15 @@ const ActivityFeedWrapper = styled.div`
   div.table-wrapper {
     /* overflow: hidden; */
     overflow-y: scroll;
-    height: 19rem;
+    height: 18.3rem;
   }
 `
 
-const NewEntryFormCard = ({ entries, users, update }) => {
-  const [entrySet, setEntrySet] = useState([])
-
-  const getEntries = async () => {
-    await fetch(
-      "https://api.airtable.com/v0/appf4ukXR0H8zxSMM/entry?api_key=keywRpVDiUGP5S788"
-    )
-      .then(resp => resp.json())
-      .then(data => {
-        //.log(data)
-        setEntrySet(data.records)
-      })
-  }
-
-  useEffect(() => {
-    getEntries()
-  }, [entrySet])
+const NewEntryFormCard = ({ users, update }) => {
   const [form, setForm] = useState({
     name: "Select name",
-    activity: "Select activity",
-    pin: 0,
+    activity: "",
+    pin: "",
   })
 
   const handleChange = input => event => {
@@ -60,13 +46,37 @@ const NewEntryFormCard = ({ entries, users, update }) => {
     return result
   }
 
+  const isSameDay = (first, second) => {
+    console.log("first", first)
+    console.log("second", second)
+    if (process.env.ALLOW_SAME_DATE === "true") {
+      console.log("in here ")
+      return false
+    } else {
+      console.log("in there ")
+      console.log("year", first.getFullYear(), second.getFullYear())
+      console.log("month", first.getMonth(), second.getMonth())
+      console.log("day", first.getDate(), second.getDate())
+      console.log(
+        first.getFullYear() === second.getFullYear() &&
+          first.getMonth() === second.getMonth() &&
+          first.getDate() === second.getDate()
+      )
+      return (
+        first.getFullYear() === second.getFullYear() &&
+        first.getMonth() === second.getMonth() &&
+        first.getDate() === second.getDate()
+      )
+    }
+  }
+
   const handleSubmit = async event => {
     event.preventDefault()
 
     if (
       form.name !== "Select name" &&
-      form.activity !== "Select activity" &&
-      form.pin !== 0
+      (form.activity !== "Enter description" || form.activity.length !== 0) &&
+      (form.pin !== 0 || form.pin !== null || form.pin !== "e")
     ) {
       let curr_user = users.filter(user => {
         return user.fields.name === form.name
@@ -80,8 +90,8 @@ const NewEntryFormCard = ({ entries, users, update }) => {
       console.log(form.pin)
       console.log(curr_user)
 
-      if (form.pin != curr_user.fields.pin) {
-        console.log("pin mismatch")
+      if (form.pin !== curr_user.fields.pin.toString()) {
+        alert("Incorrect pin number")
         return
       }
       let data = {
@@ -98,6 +108,10 @@ const NewEntryFormCard = ({ entries, users, update }) => {
         let curr_date = new Date()
         console.log(curr_date)
         console.log(adjusted_activity_date)
+        if (isSameDay(new Date(curr_user.fields.last_activity), curr_date)) {
+          alert("Cannot submit more than one activity per day")
+          return
+        }
         if (adjusted_activity_date >= curr_date) {
           curr_fields.streak = curr_user.fields.streak + 1
           curr_fields.total_score = curr_user.fields.total_score + 200
@@ -114,7 +128,7 @@ const NewEntryFormCard = ({ entries, users, update }) => {
 
       try {
         await fetch(
-          "https://api.airtable.com/v0/appf4ukXR0H8zxSMM/users?api_key=keywRpVDiUGP5S788",
+          `https://api.airtable.com/v0/appf4ukXR0H8zxSMM/users?api_key=${airtable_api_key}`,
           {
             method: "PATCH",
             headers: {
@@ -125,7 +139,7 @@ const NewEntryFormCard = ({ entries, users, update }) => {
         )
 
         await fetch(
-          "https://api.airtable.com/v0/appf4ukXR0H8zxSMM/entries?api_key=keywRpVDiUGP5S788",
+          `https://api.airtable.com/v0/appf4ukXR0H8zxSMM/entries?api_key=${airtable_api_key}`,
           {
             method: "POST",
             headers: {
@@ -151,7 +165,7 @@ const NewEntryFormCard = ({ entries, users, update }) => {
         console.log("error")
       }
     } else {
-      console.log("did not do anything")
+      alert("Some field values are empty")
     }
   }
 
@@ -165,10 +179,16 @@ const NewEntryFormCard = ({ entries, users, update }) => {
           <div className="card-content">
             <div className="content">
               <div className="field">
-                <label className="label">Name</label>
-                <div className="control">
+                <label className="label" htmlFor="name-select">
+                  Name
+                </label>
+                <div className="control" id="name-select">
                   <div className="select is-fullwidth">
-                    <select value={form.name} onChange={handleChange("name")}>
+                    <select
+                      value={form.name}
+                      placeholder="Select name"
+                      onChange={handleChange("name")}
+                    >
                       <option>Select name</option>
                       {users !== [] ? (
                         users.map((user, index) => {
@@ -177,6 +197,7 @@ const NewEntryFormCard = ({ entries, users, update }) => {
                               <option key={index}>{user.fields.name}</option>
                             )
                           }
+                          return <></>
                         })
                       ) : (
                         <></>
@@ -187,51 +208,39 @@ const NewEntryFormCard = ({ entries, users, update }) => {
               </div>
 
               <div className="field">
+                <label className="label">Activity</label>
+                <div className="control">
+                  <input
+                    className="input"
+                    type="text"
+                    placeholder="Enter description"
+                    value={form.activity}
+                    onChange={handleChange("activity")}
+                    maxLength="25"
+                  />
+                </div>
+              </div>
+
+              <div className="field">
                 <label className="label">Pin</label>
                 <div className="control">
                   <input
                     className="input"
                     type="number"
-                    placeholder="Normal input"
+                    placeholder="0"
                     value={form.pin}
                     onChange={handleChange("pin")}
                   />
                 </div>
               </div>
+              <button
+                type="submit"
+                onClick={handleSubmit}
+                className="button is-primary is-fullwidth"
+              >
+                Submit
+              </button>
             </div>
-
-            <div className="field">
-              <label className="label">Activity</label>
-              <div className="control">
-                <div className="select is-fullwidth">
-                  <select
-                    value={form.activity}
-                    onChange={handleChange("activity")}
-                  >
-                    <option>Select activity</option>
-                    {entrySet !== [] ? (
-                      entrySet.map((entry, index) => {
-                        if (entry !== null) {
-                          return (
-                            <option key={index}>{entry.fields.name}</option>
-                          )
-                        }
-                      })
-                    ) : (
-                      <></>
-                    )}
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              onClick={handleSubmit}
-              className="button is-primary is-fullwidth"
-            >
-              Submit
-            </button>
           </div>
         </div>
       </div>
@@ -365,7 +374,7 @@ export default () => {
   const fetchUsers = async () => {
     try {
       await fetch(
-        "https://api.airtable.com/v0/appf4ukXR0H8zxSMM/users?api_key=keywRpVDiUGP5S788"
+        `https://api.airtable.com/v0/appf4ukXR0H8zxSMM/users?api_key=${airtable_api_key}`
       )
         .then(resp => resp.json())
         .then(data => {
@@ -385,7 +394,7 @@ export default () => {
   const fetchEntries = async () => {
     try {
       await fetch(
-        "https://api.airtable.com/v0/appf4ukXR0H8zxSMM/entries?api_key=keywRpVDiUGP5S788"
+        `https://api.airtable.com/v0/appf4ukXR0H8zxSMM/entries?api_key=${airtable_api_key}`
       )
         .then(resp => resp.json())
         .then(data => {

@@ -21,10 +21,19 @@ const LeaderboardWrapper = styled.div`
 `
 
 const ActivityFeedWrapper = styled.div`
-  div.table-wrapper {
+  div.activity-wrapper {
     /* overflow: hidden; */
     overflow-y: scroll;
     height: 18.3rem;
+    width: auto;
+  }
+
+  .message {
+    p {
+      font-size: 0.8rem;
+    }
+
+    margin-bottom: 0.75rem;
   }
 `
 
@@ -75,7 +84,9 @@ const NewEntryFormCard = ({ users, update }) => {
 
     if (
       form.name !== "Select name" &&
-      (form.activity !== "Enter description" || form.activity.length !== 0) &&
+      (form.activity !== "Enter description" ||
+        form.activity.length !== 0 ||
+        form.activity !== null) &&
       (form.pin !== 0 || form.pin !== null || form.pin !== "e")
     ) {
       let curr_user = users.filter(user => {
@@ -210,19 +221,19 @@ const NewEntryFormCard = ({ users, update }) => {
               <div className="field">
                 <label className="label">Activity</label>
                 <div className="control">
-                  <input
-                    className="input"
-                    type="text"
-                    placeholder="Enter description"
+                  <textarea
+                    className="textarea"
                     value={form.activity}
                     onChange={handleChange("activity")}
-                    maxLength="15"
-                  />
+                    rows="3"
+                    placeholder="Enter description"
+                    maxLength="150"
+                  ></textarea>
                 </div>
               </div>
 
               <div className="field">
-                <label className="label">Pin</label>
+                <label className="label">User Pin</label>
                 <div className="control">
                   <input
                     className="input"
@@ -257,30 +268,50 @@ const ActivityFeed = ({ users, entries }) => {
 
   const RenderUserActivity = () => {
     if (entries !== []) {
-      return (
-        <tbody>
-          {entries.map((entry, index) => {
-            if (entry.fields.user[0]) {
-              const match_user = getUser(entry.fields.user[0])[0]
-              //console.log(match_user)
-              if (match_user) {
-                const user_name = match_user.fields.name
-                const entry_date = new Date(
-                  entry.fields.date
-                ).toLocaleDateString()
-                return (
-                  <tr key={index}>
-                    <td>{user_name}</td>
-                    <td>{entry.fields.type}</td>
-                    <td>{entry_date}</td>
-                    {/* <td>{user.fields.streak}</td> */}
-                  </tr>
-                )
-              }
-            }
-          })}
-        </tbody>
-      )
+      return entries.map((entry, index) => {
+        if (entry.fields.user[0]) {
+          const match_user = getUser(entry.fields.user[0])[0]
+          if (match_user) {
+            const user_name = match_user.fields.name
+            let entry_date = new Date(entry.fields.date)
+            return (
+              <div key={index} className="message is-dark">
+                <div className="message-body">
+                  <p>
+                    <strong className="title is-6">{user_name}</strong>{" "}
+                    {entry_date.toLocaleDateString()}
+                    <br />
+                    {entry.fields.type}
+                  </p>
+                </div>
+              </div>
+            )
+          }
+        }
+      })
+
+      //   <tbody>
+      //     {entries.map((entry, index) => {
+      //       if (entry.fields.user[0]) {
+      //         const match_user = getUser(entry.fields.user[0])[0]
+      //         //console.log(match_user)
+      //         if (match_user) {
+      //           const user_name = match_user.fields.name
+      //           let entry_date = new Date(entry.fields.date)
+      //           entry_date = `${entry_date.getMonth() +
+      //             1}/${entry_date.getDate()}`
+      //           return (
+      //             <tr key={index}>
+      //               <td>{user_name}</td>
+      //               <td>{entry.fields.type}</td>
+      //               <td>{entry_date}</td>
+      //               {/* <td>{user.fields.streak}</td> */}
+      //             </tr>
+      //           )
+      //         }
+      //       }
+      //     })}
+      //   </tbody>
     } else {
       return <></>
     }
@@ -294,18 +325,8 @@ const ActivityFeed = ({ users, entries }) => {
           </header>
           <div className="card-content">
             <div className="content">
-              <div className="table-wrapper">
-                <table className="table">
-                  <thead>
-                    <tr>
-                      <th>Name</th>
-                      <th>Activity</th>
-                      <th>Date</th>
-                      {/* <th>Streak</th> */}
-                    </tr>
-                  </thead>
-                  <RenderUserActivity />
-                </table>
+              <div className="activity-wrapper">
+                <RenderUserActivity />
               </div>
             </div>
           </div>

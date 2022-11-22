@@ -15,7 +15,7 @@
   },
   "dependencies": {
     "bulma": "^0.8.1",
-    "gatsby": "^2.20.12",
+    "gatsby": "^2.32.13",
     "gatsby-plugin-sass": "^2.2.1",
     "gatsby-source-airtable": "^2.1.0",
     "gatsby-source-filesystem": "^2.2.2",
